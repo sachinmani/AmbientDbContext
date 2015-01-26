@@ -137,7 +137,7 @@ namespace AmbientDbContext.Manager
                 {
                     //this can only happen when a parallel threads are executing with the main thread and the parallel/main
                     //thread has disposed before the main and/or other parallel has finished execution
-                    //This should never happen.Only programming error coul cause this issue.
+                    //This should never happen.Only programming error could cause this issue.
                     throw new ObjectDisposedException("Object already disposed exception");
                 }
                 var contextData = CallContextContextData.GetContextData();
@@ -202,14 +202,19 @@ namespace AmbientDbContext.Manager
             }
         }
 
-        public void RefreshCacheWithUpdatedEntities(IEnumerable entities)
+        /// <summary>
+        /// This method is used when a non Ambient transaction is nested inside a Ambient transaction, so that any updated objects inside of the non ambient context
+        /// should be loaded back into the parent context to avoid stale objects in the parent cache.
+        /// </summary>
+        /// <param name="entities">list of entities to be refreshed in parent scope</param>
+        public void RefreshParentCacheWithUpdatedEntities(IEnumerable entities)
         {
             foreach (var dbContext in _currentThreadContextData.DbContextCollection.GetAllDbContext())
             {
                 var ambientContextData = CallContextContextData.GetContextData();
                 if (ambientContextData == null)
                 {
-                    break;
+                    return;
                 }
 
                 foreach (var ambientDbContext in ambientContextData.DbContextCollection.GetAllDbContext())
@@ -247,14 +252,20 @@ namespace AmbientDbContext.Manager
             } 
         }
 
-        public void RefreshCacheWithUpdatedEntitiesAsync(IEnumerable entities, CancellationToken cancellationToken)
+        /// <summary>
+        /// This method is used when a non Ambient transaction is nested inside a Ambient transaction, so that any updated objects inside of the non ambient context
+        /// should be loaded back into the parent context to avoid stale objects in the parent cache.
+        /// </summary>
+        /// <param name="entities">list of entities to be refreshed in parent scope</param>
+        /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+        public void RefreshParentCacheWithUpdatedEntitiesAsync(IEnumerable entities, CancellationToken cancellationToken)
         {
             foreach (var dbContext in _currentThreadContextData.DbContextCollection.GetAllDbContext())
             {
                 var ambientContextData = CallContextContextData.GetContextData();
                 if (ambientContextData == null)
                 {
-                    break;
+                    return;
                 }
 
                 foreach (var ambientDbContext in ambientContextData.DbContextCollection.GetAllDbContext())

@@ -32,7 +32,7 @@ namespace AmbientDbContext.Manager
         }
 
         /// <summary>
-        /// Check to see whether any contextdata exists in the callcontext else return null.
+        /// Check to see whether any context data exists in the callcontext else return null.
         /// </summary>
         /// <returns></returns>
         internal static ContextData GetContextData()
