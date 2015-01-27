@@ -8,4 +8,6 @@ According to microsoft documentation "The call context allows a remoting client 
 
 Without going into the details of the implementation. I would like to straight go into the ways this utility could be used. Also understand things that need to be done, things to be aware of when using this utility. This utility could be used with any design pattern you would be using around the data access layer.
 
+To be continued with more details sooner!
+
 
