@@ -8,34 +8,32 @@ namespace TestExamples.Operations
 {
     public class BlogOperations
     {
+        private BloggerDbContext _bloggerDbContext;
         public BloggerDbContext BloggerDbContext
         {
             get
             {
-                return DbContextLocator.GetDbContext<BloggerDbContext>();
+                //DbContextLocator locate and return the AmbientDbContext if one exists  
+                _bloggerDbContext = DbContextLocator.GetDbContext<BloggerDbContext>();
+                return _bloggerDbContext;
+            }
+            set
+            {
+                //set the dbcontext manually when using non ambient transction
+                _bloggerDbContext = value;
             }
         }
 
-        public VoBlog GetBlog(int blogId)
+        public Blog GetBlog(int blogId)
         {
             var blog = BloggerDbContext.Blogs.Find(blogId);
-            return new VoBlog
-            {
-               Overview = blog.Overview,
-               CreatedDateTime = blog.CreatedDate,
-               PostId = blog.PostId
-            };
+            return blog;
         }
 
-        public IEnumerable<VoBlog> GetBlogs()
+        public IEnumerable<Blog> GetBlogs()
         {
             var blogs = BloggerDbContext.Blogs;
-            return blogs.Select(blog => new VoBlog
-            {
-                Overview = blog.Overview,
-                CreatedDateTime = blog.CreatedDate,
-                PostId = blog.PostId
-            }).ToList();
+            return blogs;
         }
 
         public Blog AddBlog(VoBlog voBlog)
@@ -51,14 +49,9 @@ namespace TestExamples.Operations
             return blog;
         }
 
-        public VoBlog GetUserRecentBlog(long userId)
+        public Blog GetUserRecentBlog(long userId)
         {
-            var recentBlog = BloggerDbContext.Blogs.OrderByDescending(blg => blg.CreatedDate).Select(blog => new VoBlog
-            {
-                CreatedDateTime = blog.CreatedDate,
-                Overview = blog.Overview,
-                PostId = blog.PostId
-            }).First();
+            var recentBlog = BloggerDbContext.Blogs.OrderByDescending(blg => blg.CreatedDate).First();
             return recentBlog;
         }
     }

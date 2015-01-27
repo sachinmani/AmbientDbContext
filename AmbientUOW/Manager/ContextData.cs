@@ -2,17 +2,15 @@
 using System.Data;
 using System.Data.Common;
 using System.Data.Entity;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using AmbientDbContext.Interfaces;
-using NLog;
 
 namespace AmbientDbContext.Manager
 {
     internal class ContextData : IDisposable
     {
-        private static readonly Logger Log = LogManager.GetCurrentClassLogger();
-
         internal ContextCollection DbContextCollection { get; private set; }
 
         internal bool Disposed { get; set; }
@@ -31,7 +29,7 @@ namespace AmbientDbContext.Manager
 
         internal static ContextData CreateContextData<T>(DbContextOption.Mode mode, IsolationLevel? isolationLevel, DbTransaction transaction, DbConnection sqlConnection) where T : DbContext, IAmbientDbContext, new()
         {
-            Log.Debug("Trying to create context data");
+            Debug.WriteLine("Trying to create context data");
             var contextData = new ContextData();
             contextData.CreateNewDbContextIfNotExists<T>(mode, isolationLevel, transaction, sqlConnection);
             return contextData;

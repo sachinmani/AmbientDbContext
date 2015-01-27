@@ -4,16 +4,15 @@ using System.Collections.Generic;
 using System.Data.Entity;
 using System.Data.Entity.Infrastructure;
 using System.Data.Entity.Validation;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using AmbientDbContext.Interfaces;
-using NLog;
 
 namespace AmbientDbContext.Manager
 {
     public class ContextCollection
     {
-        private static readonly Logger Log = LogManager.GetCurrentClassLogger();
         private readonly IDictionary<Type, object> _dictionary;
         private readonly IDictionary<Type, DbContextTransaction> _transactionDictionary;
         private bool _allowSaving;
@@ -66,7 +65,7 @@ namespace AmbientDbContext.Manager
         internal async Task CommitAllAsync(bool implicitCommit, CancellationToken cancellationToken)
         {
             var exceptionOccured = false;
-            Log.Debug("Trying to save details");
+            Debug.WriteLine("Trying to save details");
             try
             {
                 foreach (var dbContext in _dictionary.Values)
@@ -85,12 +84,12 @@ namespace AmbientDbContext.Manager
                 exceptionOccured = true;
                 foreach (var eve in e.EntityValidationErrors)
                 {
-                    Log.Error(
+                    Debug.WriteLine(
                         "Entity of type \"{0}\" in state \"{1}\" has the following validation errors:",
                         eve.Entry.Entity.GetType().Name, eve.Entry.State);
                     foreach (var ve in eve.ValidationErrors)
                     {
-                        Log.Error("- Property: \"{0}\", Error: \"{1}\"",
+                        Debug.WriteLine("- Property: \"{0}\", Error: \"{1}\"",
                             ve.PropertyName, ve.ErrorMessage);
                     }
                 }
@@ -116,7 +115,7 @@ namespace AmbientDbContext.Manager
         internal void CommitAll(bool implicitCommit)
         {
             var exceptionOccured = false;
-            Log.Debug("Trying to save details");
+            Debug.WriteLine("Trying to save details");
             try
             {
                 foreach (var dbContext in _dictionary.Values)
@@ -135,12 +134,12 @@ namespace AmbientDbContext.Manager
                 exceptionOccured = true;
                 foreach (var eve in e.EntityValidationErrors)
                 {
-                    Log.Error(
+                    Debug.WriteLine(
                         "Entity of type \"{0}\" in state \"{1}\" has the following validation errors:",
                         eve.Entry.Entity.GetType().Name, eve.Entry.State);
                     foreach (var ve in eve.ValidationErrors)
                     {
-                        Log.Error("- Property: \"{0}\", Error: \"{1}\"",
+                        Debug.WriteLine("- Property: \"{0}\", Error: \"{1}\"",
                             ve.PropertyName, ve.ErrorMessage);
                     }
                 }

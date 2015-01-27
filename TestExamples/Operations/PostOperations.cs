@@ -5,26 +5,27 @@ using TestExamples.ValueObjects;
 namespace TestExamples.Operations
 {
     public class PostOperations
-    {   
-
+    {
+        private BloggerDbContext _bloggerDbContext;
         public BloggerDbContext BloggerDbContext
         {
             get
             {
-                return DbContextLocator.GetDbContext<BloggerDbContext>();
+                //DbContextLocator locate and return the AmbientDbContext if one exists  
+                _bloggerDbContext = DbContextLocator.GetDbContext<BloggerDbContext>();
+                return _bloggerDbContext;
+            }
+            set
+            {
+                //set the dbcontext manually when using non ambient transction
+                _bloggerDbContext = value;
             }
         }
 
-        public VoPost GetPost(long postId)
+        public Post GetPost(long postId)
         {
             var post = BloggerDbContext.Posts.Find(postId);
-            return new VoPost
-            {
-                Content = post.Content,
-                Meta = post.Meta,
-                ShortDescription = post.ShortDescription,
-                Title = post.Title
-            };
+            return post;
         }
 
         public Post AddPost(VoPost vopost)

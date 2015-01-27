@@ -13,6 +13,7 @@ namespace DataModel
         [ForeignKey("BlogPost"), Index("IX_Blog_PostId")]
         public long PostId { get; set; }
 
+        [Required]
         public string Overview { get; set; }
 
         public DateTime CreatedDate { get; set; }

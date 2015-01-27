@@ -2,7 +2,6 @@
 using System.Data.Entity;
 using DataModel;
 using TestExamples.Interfaces;
-using TestExamples.Operations;
 using TestExamples.Repository;
 using TestExamples.ValueObjects;
 
@@ -21,7 +20,7 @@ namespace TestExamples
 
             //Creating an user
             Console.WriteLine("Creating an user");
-            IUserRepository userRepository = new UserRepository(new UserOperations());
+            IUserRepository userRepository = new UserRepository();
             var userId = userRepository.AddUser(new VoUser
             {
                 Name = "TestUser",
@@ -30,7 +29,7 @@ namespace TestExamples
 
             //Creating a blog and its post
             Console.WriteLine("Creating a blog post");
-            IBlogRepository blogRepository = new BlogRepository(new BlogOperations(), new PostOperations());
+            IBlogRepository blogRepository = new BlogRepository();
             var blog = new VoBlog
             {
                 CreatedDateTime = DateTime.Now,
@@ -61,7 +60,29 @@ namespace TestExamples
             Console.WriteLine("BlogPost Short Description " + recentBlog.Post.ShortDescription);
             Console.WriteLine("BlogPost Content " + recentBlog.Post.Content);
 
+            //Create a blog and try to save it. If the creation fails , update the  creation failure count in the user profile.
+            var blog2 = new VoBlog
+            {
+                CreatedDateTime = DateTime.Now,
+                Post = new VoPost
+                {
+                    Meta = "Sample, Test",
+                    Content = "This is a sample overview",
+                    ShortDescription = "This is a sample short description",
+                    Title = "Test Title"
+                },
+                UserId = userId
 
+            };
+            try
+            {
+                blogRepository.AddBlog(blog2);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.InnerException.Message);
+
+            }
             Console.ReadKey();
         }
     }

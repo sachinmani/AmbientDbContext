@@ -9,33 +9,32 @@ namespace TestExamples.Operations
 {
     public class UserOperations
     {
+        private BloggerDbContext _bloggerDbContext;
         public BloggerDbContext BloggerDbContext
         {
             get
             {
                 //DbContextLocator locate and return the AmbientDbContext if one exists  
-                return DbContextLocator.GetDbContext<BloggerDbContext>();
+                _bloggerDbContext = DbContextLocator.GetDbContext<BloggerDbContext>();
+                return _bloggerDbContext;
+            }
+            set
+            {
+                //set the dbcontext manually when using non ambient transction
+                _bloggerDbContext = value;
             }
         }
 
-        public VoUser GetUser(long userId)
+        public User GetUser(long userId)
         {
             var user = BloggerDbContext.Users.Single(usr => usr.UserId == userId);
-            return new VoUser
-            {
-                Name = user.Name,
-                Occupation = user.Occupation
-            };
+            return user;
         }
 
-        public async Task<VoUser> GetUserAsync(long userId)
+        public async Task<User> GetUserAsync(long userId)
         {
             var user = await BloggerDbContext.Users.SingleAsync(usr => usr.UserId == userId);
-            return new VoUser
-            {
-                Name = user.Name,
-                Occupation = user.Occupation
-            };
+            return user;
         }
 
         public User AddUser(VoUser user)
@@ -47,6 +46,13 @@ namespace TestExamples.Operations
             };
             BloggerDbContext.Users.Add(newUser);
             return newUser;
+        }
+
+        public void UpdateBlogCreationFailureCount(long userId)
+        {
+            var user = BloggerDbContext.Users.Find(userId);
+            var count = user.BlogPostCreationFailureCount;
+            user.BlogPostCreationFailureCount = count + 1;
         }
     }
 }

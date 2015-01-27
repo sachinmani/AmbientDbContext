@@ -346,7 +346,7 @@ namespace UnitTests
                      DbContextScopeFactory.CreateNonAmbientDbContextinTransactionMode<BloggerDbContext>(IsolationLevel.Serializable))
             {
                 //Get the current DbContext of type BloggerDbContext
-                var context = DbContextLocator.GetNonAmbientDbContext(dbContextScope);
+                var context = dbContextScope.GetNonAmbientDbContext();
                 //Adding Blog to the database.
                 var blog = new Blog
                 {
@@ -384,7 +384,7 @@ namespace UnitTests
                     DbContextScopeFactory.CreateNonAmbientDbContextinTransactionMode<BloggerDbContext>(IsolationLevel.ReadCommitted))
                 {
                     //Get the current DbContext of type BloggerDbContext
-                    var context = DbContextLocator.GetNonAmbientDbContext(dbContextScope);
+                    var context = dbContextScope.GetNonAmbientDbContext();
                     //Adding Blog to the database.
                     var blog = new Blog
                     {
@@ -423,7 +423,7 @@ namespace UnitTests
                     DbContextScopeFactory.CreateNonAmbientDbContextinTransactionMode<BloggerDbContext>(IsolationLevel.ReadCommitted))
                 {
                     //Get the current DbContext of type BloggerDbContext
-                    var context = DbContextLocator.GetNonAmbientDbContext(dbContextScope);
+                    var context = dbContextScope.GetNonAmbientDbContext();
                     //Adding Blog to the database.
                     var blog = new Blog
                     {

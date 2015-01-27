@@ -13,6 +13,8 @@ namespace DataModel
 
         public string Occupation { get; set; }
 
+        public int BlogPostCreationFailureCount { get; set; }
+
         public ICollection<Blog> Blogs { get; set; } 
     }
 }
