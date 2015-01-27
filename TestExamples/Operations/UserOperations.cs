@@ -9,11 +9,11 @@ namespace TestExamples.Operations
 {
     public class UserOperations
     {
-
         public BloggerDbContext BloggerDbContext
         {
             get
             {
+                //DbContextLocator locate and return the AmbientDbContext if one exists  
                 return DbContextLocator.GetDbContext<BloggerDbContext>();
             }
         }

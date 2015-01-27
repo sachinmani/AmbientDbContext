@@ -16,16 +16,22 @@ namespace TestExamples.Repository
         }
         public VoUser GetUser(long userId)
         {
+            //We are creating a dbContextScope here which in turn creates an AmbientDbContext
             using (var dbContextScope = DbContextScopeFactory.CreateAmbientDbContextinReadonlyMode<BloggerDbContext>())
             {
+                //The operations method doesn't take any dbContext parameter.We are not passing the dbContext around
                 return _userOperations.GetUser(userId);
             }
         }
 
         public async Task<VoUser> GetUserAsync(long userId)
         {
+            //We are creating a dbContextScope here which in turn creates an AmbientDbContext
             using (var dbContextScope = DbContextScopeFactory.CreateAmbientDbContextinReadonlyMode<BloggerDbContext>())
             {
+                //The interesting thing to notice in the below code is that it doesn't run on the main thread. Instead it spins
+                //off its own thread and run the operation on the new thread. Even when you move between threads the 
+                //dbContext should/would be available.
                 return await _userOperations.GetUserAsync(userId);
             }
         }
