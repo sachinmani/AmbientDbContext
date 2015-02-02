@@ -11,14 +11,5 @@
             Write,
             None
         }
-
-        /// <summary>
-        /// DbTransaction Option
-        /// </summary>
-        public enum DbTransactionOption
-        {
-            NonAmbientMode,
-            AmbientMode
-        }
     }
 }

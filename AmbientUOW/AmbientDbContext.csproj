@@ -60,9 +60,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Manager\AmbientDbContextHouseKeeper.cs" />
     <Compile Include="Interfaces\IDbContextScopeFactory.cs" />
+    <Compile Include="Manager\Memento.cs" />
     <Compile Include="Manager\DbContextExtensions.cs" />
     <Compile Include="Manager\DbContextLocator.cs" />
+    <Compile Include="Manager\NonAmbientDbContextScope.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Manager\CallContextContextData.cs" />
     <Compile Include="Manager\ContextCollection.cs" />

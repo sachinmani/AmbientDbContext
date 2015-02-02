@@ -5,67 +5,77 @@ using AmbientDbContext.Interfaces;
 
 namespace AmbientDbContext.Manager
 {
-    public class DbContextScopeFactory
+    public class DbContextScopeFactory : IDbContextScopeFactory
     {
-        public static DbContextScope<T> CreateAmbientDbContextinReadonlyMode<T>()
+        public DbContextScope<T> CreateAmbientDbContext<T>() where T : DbContext, IAmbientDbContext, new()
+        {
+            return CreateDbContextScope<T>(DbContextOption.Mode.Write, null); 
+        }
+
+        public DbContextScope<T> CreateAmbientDbContextInReadonlyMode<T>()
             where T : DbContext, IAmbientDbContext, new()
         {
             return CreateDbContextScope<T>(DbContextOption.Mode.Read, IsolationLevel.Serializable);   
         }
 
-        public static DbContextScope<T> CreateAmbientDbContextinTransactionMode<T>()
+        public DbContextScope<T> CreateAmbientDbContextInReadonlyMode<T>(IsolationLevel isolationLevel) where T : DbContext, IAmbientDbContext, new()
+        {
+            return CreateDbContextScope<T>(DbContextOption.Mode.Read, isolationLevel);
+        }
+
+        public DbContextScope<T> CreateAmbientDbContextInTransactionMode<T>()
             where T : DbContext, IAmbientDbContext, new()
         {
             return CreateDbContextScope<T>(DbContextOption.Mode.Write, IsolationLevel.Serializable);
         }
 
-        public static DbContextScope<T> CreateAmbientDbContextinTransactionMode<T>(IsolationLevel isolationLevel)
+        public DbContextScope<T> CreateAmbientDbContextInTransactionMode<T>(IsolationLevel isolationLevel)
             where T : DbContext, IAmbientDbContext, new()
         {
-            return CreateDbContextScope<T>(DbContextOption.Mode.Write, isolationLevel, DbContextOption.DbTransactionOption.AmbientMode);
+            return CreateDbContextScope<T>(DbContextOption.Mode.Write, isolationLevel);
         }
 
-        public static DbContextScope<T> CreateNonAmbientDbContextinTransactionMode<T>()
+        public DbContextScope<T> CreateNonAmbientDbContextInTransactionMode<T>()
             where T : DbContext, IAmbientDbContext, new()
         {
-            return CreateNonAmbientDbContextinTransactionMode<T>(IsolationLevel.Serializable);
+            return CreateNonAmbientDbContextInTransactionMode<T>(IsolationLevel.Serializable);
         }
 
-        public static DbContextScope<T> CreateNonAmbientDbContextinTransactionMode<T>(IsolationLevel isolationLevel)
+        public DbContextScope<T> CreateNonAmbientDbContextInTransactionMode<T>(IsolationLevel isolationLevel)
             where T : DbContext, IAmbientDbContext, new()
         {
-            return CreateDbContextScope<T>(DbContextOption.Mode.Write, isolationLevel, DbContextOption.DbTransactionOption.NonAmbientMode);
+            return CreateNonAmbientDbContextScope<T>(DbContextOption.Mode.Write, isolationLevel);
         }
 
-        public static DbContextScope<T> CreateAmbientDbContextWithExternalTransaction<T>(DbTransaction dbTransaction, DbConnection connection)
+        public DbContextScope<T> CreateNonAmbientDbContextScope<T>(DbContextOption.Mode mode, 
+                                                                   IsolationLevel? isolationLevel) where T : DbContext, IAmbientDbContext, new()
+        {
+            var dbContextScope = new NonAmbientDbContextScope<T>(mode, isolationLevel, null, null, new AmbientDbContextHouseKeeper());
+            dbContextScope.Initialize();
+            return dbContextScope;
+        } 
+
+        public DbContextScope<T> CreateAmbientDbContextWithExternalTransaction<T>(DbTransaction dbTransaction, DbConnection connection)
             where T : DbContext, IAmbientDbContext, new()
         {
-            return CreateDbContextScope<T>(DbContextOption.Mode.Write, null, DbContextOption.DbTransactionOption.AmbientMode, dbTransaction, connection);
+            return CreateDbContextScope<T>(DbContextOption.Mode.Write, null, dbTransaction, connection);
         }
 
         private static DbContextScope<T> CreateDbContextScope<T>(DbContextOption.Mode mode, IsolationLevel? isolationLevel) where T : DbContext, IAmbientDbContext, new()
         {
-            return CreateDbContextScope<T>(mode, isolationLevel, DbContextOption.DbTransactionOption.AmbientMode, null, null);
+            return CreateDbContextScope<T>(mode, isolationLevel, null, null);
         }
 
-        private static DbContextScope<T> CreateDbContextScope<T>(DbContextOption.Mode mode, IsolationLevel? isolationLevel, DbContextOption.DbTransactionOption dbTransactionOption) where T : DbContext, IAmbientDbContext, new()
+        private static DbContextScope<T> CreateDbContextScope<T>(DbContextOption.Mode mode, IsolationLevel? isolationLevel, DbTransaction dbTransaction, DbConnection connection) where T : DbContext, IAmbientDbContext, new()
         {
-            return CreateDbContextScope<T>(mode, isolationLevel, dbTransactionOption, null, null);
-        }
-
-        private static DbContextScope<T> CreateDbContextScope<T>(DbContextOption.Mode mode, IsolationLevel? isolationLevel, DbContextOption.DbTransactionOption dbTransactionOption, DbTransaction dbTransaction, DbConnection connection) where T : DbContext, IAmbientDbContext, new()
-        {
-            return new DbContextScope<T>(mode, isolationLevel, dbTransaction, connection, dbTransactionOption);
+            var dbContextScope  = new DbContextScope<T>(mode, isolationLevel, dbTransaction, connection);
+            dbContextScope.Initialize();
+            return dbContextScope;
         }
 
         internal static T GetDbContext<T>() where T : DbContext, IAmbientDbContext, new()
         {
             return DbContextScope<T>.GetDbContext();
-        }
-
-        internal static T GetNonAmbientDbContext<T>(DbContextScope<T> dbContextScope) where T : DbContext, IAmbientDbContext, new()
-        {
-            return dbContextScope.GetNonAmbientDbContext();
         }
     }
 }

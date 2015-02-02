@@ -5,6 +5,7 @@
  using System.Linq;
  using System.Threading;
  using System.Threading.Tasks;
+ using AmbientDbContext.Interfaces;
  using AmbientDbContext.Manager;
 using DataModel;
 using NUnit.Framework;
@@ -16,10 +17,12 @@ namespace UnitTests
     {
         private DropCreateDatabaseAlways<BloggerDbContext> _dropCreateDatabaseAlways;
         private BloggerDbContext _context;
+        private IDbContextScopeFactory _dbContextScopeFactory;
 
         [SetUp]
         public void Setup()
         {
+            _dbContextScopeFactory = new DbContextScopeFactory();
             _dropCreateDatabaseAlways = new DropCreateDatabaseAlways<BloggerDbContext>();
             Database.SetInitializer(_dropCreateDatabaseAlways);
             _context = new BloggerDbContext();
@@ -40,7 +43,7 @@ namespace UnitTests
         {
             using (
                 var dbContextScope =
-                    DbContextScopeFactory.CreateAmbientDbContextinTransactionMode<BloggerDbContext>())
+                    _dbContextScopeFactory.CreateAmbientDbContextInTransactionMode<BloggerDbContext>())
             {
                 //Get the current DbContext of type BloggerDbContext
                 var context = DbContextLocator.GetDbContext<BloggerDbContext>();
@@ -53,7 +56,8 @@ namespace UnitTests
                     {
                         Name = "TestUser",
                         Occupation = "Software Developer",
-                    }
+                    },
+                    Overview = "This is a test overview"
                 };
                 context.Blogs.Add(blog);
                 var post = new Post
@@ -79,7 +83,7 @@ namespace UnitTests
         {
             using (
                 var dbContextScope =
-                    DbContextScopeFactory.CreateAmbientDbContextinTransactionMode<BloggerDbContext>(IsolationLevel.ReadCommitted))
+                    _dbContextScopeFactory.CreateAmbientDbContextInTransactionMode<BloggerDbContext>(IsolationLevel.ReadCommitted))
             {
                 //Get the current DbContext of type BloggerDbContext
                 var context = DbContextLocator.GetDbContext<BloggerDbContext>();
@@ -92,7 +96,8 @@ namespace UnitTests
                     {
                         Name = "TestUser",
                         Occupation = "Software Developer",
-                    }
+                    },
+                    Overview = "This is a test overview"
                 };
                 context.Blogs.Add(blog);
 
@@ -121,12 +126,12 @@ namespace UnitTests
         [ExpectedException(typeof(InvalidOperationException))]
         public void AmbientDbContext_Should_ThrowInvalidOperationException_WhenParentInRead_AndChildInWriteMode()
         {
-            using (DbContextScopeFactory.CreateAmbientDbContextinReadonlyMode<BloggerDbContext>())
+            using (_dbContextScopeFactory.CreateAmbientDbContextInReadonlyMode<BloggerDbContext>())
             {
 
                 using (
                     var dbContextScope2 =
-                        DbContextScopeFactory.CreateAmbientDbContextinTransactionMode<BloggerDbContext>())
+                        _dbContextScopeFactory.CreateAmbientDbContextInTransactionMode<BloggerDbContext>())
                 {
                     //Get the current DbContext of type BloggerDbContext
                     var context = DbContextLocator.GetDbContext<BloggerDbContext>();
@@ -139,7 +144,8 @@ namespace UnitTests
                         {
                             Name = "TestUser",
                             Occupation = "Software Developer",
-                        }
+                        },
+                        Overview = "This is a test overview"
                     };
                     context.Blogs.Add(blog);
 
@@ -164,12 +170,12 @@ namespace UnitTests
         {
             using (
                 var dbContextScope =
-                    DbContextScopeFactory.CreateAmbientDbContextinTransactionMode<BloggerDbContext>())
+                    _dbContextScopeFactory.CreateAmbientDbContextInTransactionMode<BloggerDbContext>())
             {
 
                 using (
                     var dbContextScope2 =
-                        DbContextScopeFactory.CreateAmbientDbContextinTransactionMode<BloggerDbContext>())
+                        _dbContextScopeFactory.CreateAmbientDbContextInTransactionMode<BloggerDbContext>())
                 {
                     //Get the current DbContext of type BloggerDbContext
                     var context2 = DbContextLocator.GetDbContext<BloggerDbContext>();
@@ -182,7 +188,8 @@ namespace UnitTests
                         {
                             Name = "TestUser",
                             Occupation = "Software Developer",
-                        }
+                        },
+                        Overview = "This is a test overview"
                     };
                     context2.Blogs.Add(blog2);
 
@@ -210,7 +217,8 @@ namespace UnitTests
                     {
                         Name = "TestUser",
                         Occupation = "Software Developer",
-                    }
+                    },
+                    Overview = "This is a test overview"
                 };
                 context.Blogs.Add(blog);
                 var post = new Post
@@ -240,7 +248,7 @@ namespace UnitTests
         {
             using (
                 var dbContextScope2 =
-                    DbContextScopeFactory.CreateAmbientDbContextinTransactionMode<BloggerDbContext>())
+                    _dbContextScopeFactory.CreateAmbientDbContextInTransactionMode<BloggerDbContext>())
             {
                 //Get the current DbContext of type BloggerDbContext
                 var context2 = DbContextLocator.GetDbContext<BloggerDbContext>();
@@ -259,7 +267,7 @@ namespace UnitTests
         {
             using (
                     var dbContextScope2 =
-                        DbContextScopeFactory.CreateAmbientDbContextinTransactionMode<BloggerDbContext>())
+                        _dbContextScopeFactory.CreateAmbientDbContextInTransactionMode<BloggerDbContext>())
             {
                 //Get the current DbContext of type BloggerDbContext
                 var context2 = DbContextLocator.GetDbContext<BloggerDbContext>();
@@ -273,7 +281,8 @@ namespace UnitTests
                     {
                         Name = "TestUser",
                         Occupation = "Software Developer",
-                    }
+                    },
+                    Overview = "This is a test overview"
                 };
                 context2.Blogs.Add(blog2);
 
@@ -303,7 +312,7 @@ namespace UnitTests
                 {
                     using (
                         var dbContextScope2 =
-                            DbContextScopeFactory.CreateAmbientDbContextWithExternalTransaction<BloggerDbContext>(sqlTxn, conn))
+                            _dbContextScopeFactory.CreateAmbientDbContextWithExternalTransaction<BloggerDbContext>(sqlTxn, conn))
                     {
                         //Get the current DbContext of type BloggerDbContext
                         var context2 = DbContextLocator.GetDbContext<BloggerDbContext>();
@@ -317,7 +326,8 @@ namespace UnitTests
                             {
                                 Name = "TestUser",
                                 Occupation = "Software Developer",
-                            }
+                            },
+                            Overview = "This is a test overview"
                         };
                         context2.Blogs.Add(blog2);
 
@@ -343,10 +353,10 @@ namespace UnitTests
         public void NonAmbientDbContext_Saves_Successfully()
         {
             using (var dbContextScope =
-                     DbContextScopeFactory.CreateNonAmbientDbContextinTransactionMode<BloggerDbContext>(IsolationLevel.Serializable))
+                     _dbContextScopeFactory.CreateNonAmbientDbContextInTransactionMode<BloggerDbContext>(IsolationLevel.Serializable))
             {
                 //Get the current DbContext of type BloggerDbContext
-                var context = dbContextScope.GetNonAmbientDbContext();
+                var context = DbContextLocator.GetDbContext<BloggerDbContext>();
                 //Adding Blog to the database.
                 var blog = new Blog
                 {
@@ -356,7 +366,8 @@ namespace UnitTests
                     {
                         Name = "TestUser",
                         Occupation = "Software Developer",
-                    }
+                    },
+                    Overview = "This is a test overview"
                 };
                 context.Blogs.Add(blog);
                 var post = new Post
@@ -378,13 +389,13 @@ namespace UnitTests
         public void NonAmbientDbContext_Saves_Successfully_WhenNestedInside_AmbinetContext()
         {
             using (var dbContextScope2 =
-                DbContextScopeFactory.CreateAmbientDbContextinTransactionMode<BloggerDbContext>(IsolationLevel.Serializable))
+                _dbContextScopeFactory.CreateAmbientDbContextInTransactionMode<BloggerDbContext>(IsolationLevel.Serializable))
             {
                 using (var dbContextScope =
-                    DbContextScopeFactory.CreateNonAmbientDbContextinTransactionMode<BloggerDbContext>(IsolationLevel.ReadCommitted))
+                    _dbContextScopeFactory.CreateNonAmbientDbContextInTransactionMode<BloggerDbContext>(IsolationLevel.ReadCommitted))
                 {
                     //Get the current DbContext of type BloggerDbContext
-                    var context = dbContextScope.GetNonAmbientDbContext();
+                    var context = DbContextLocator.GetDbContext<BloggerDbContext>();
                     //Adding Blog to the database.
                     var blog = new Blog
                     {
@@ -394,7 +405,8 @@ namespace UnitTests
                         {
                             Name = "TestUser",
                             Occupation = "Software Developer",
-                        }
+                        },
+                        Overview = "This is a test overview"
                     };
                     context.Blogs.Add(blog);
                     var post = new Post
@@ -417,13 +429,13 @@ namespace UnitTests
         public void NonAmbientDbContext_And_AmbientDbContext_Saves_Successfully_WhenContextsAreNested()
         {
             using (var dbContextScope2 =
-                DbContextScopeFactory.CreateAmbientDbContextinTransactionMode<BloggerDbContext>())
+                _dbContextScopeFactory.CreateAmbientDbContextInTransactionMode<BloggerDbContext>())
             {
                 using (var dbContextScope =
-                    DbContextScopeFactory.CreateNonAmbientDbContextinTransactionMode<BloggerDbContext>(IsolationLevel.ReadCommitted))
+                    _dbContextScopeFactory.CreateNonAmbientDbContextInTransactionMode<BloggerDbContext>(IsolationLevel.ReadCommitted))
                 {
                     //Get the current DbContext of type BloggerDbContext
-                    var context = dbContextScope.GetNonAmbientDbContext();
+                    var context = DbContextLocator.GetDbContext<BloggerDbContext>();
                     //Adding Blog to the database.
                     var blog = new Blog
                     {
@@ -433,7 +445,8 @@ namespace UnitTests
                         {
                             Name = "TestUser",
                             Occupation = "Software Developer",
-                        }
+                        },
+                        Overview = "This is a test overview"
                     };
                     context.Blogs.Add(blog);
                     var post = new Post
@@ -461,7 +474,8 @@ namespace UnitTests
                     {
                         Name = "TestUser",
                         Occupation = "Software Developer",
-                    }
+                    },
+                    Overview = "This is a test overview"
                 };
                 context2.Blogs.Add(blog2);
                 var post2 = new Post

@@ -74,6 +74,11 @@ namespace AmbientDbContext.Manager
                         var transaction = currentDbContext.Database.BeginTransaction(isolationLevel.Value);
                         DbContextCollection.Add(currentDbContext, transaction);
                     }
+                    else
+                    {
+                        var transaction = currentDbContext.Database.BeginTransaction();
+                        DbContextCollection.Add(currentDbContext, transaction);
+                    }
                 }
             }
             return true;

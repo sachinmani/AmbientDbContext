@@ -27,7 +27,5 @@ namespace DataModel
         public DbSet<Comment> Comments { get; set; }
 
         public DbContextOption.Mode Mode { get; set; }
-
-        public DbContextOption.DbTransactionOption TransactionOption { get; set; }
     }
 }
