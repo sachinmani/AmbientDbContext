@@ -9,6 +9,9 @@ using AmbientDbContext.Interfaces;
 
 namespace AmbientDbContext.Manager
 {
+    /// <summary>
+    /// Responsible for creating, handling and storing all DbContexts and its data associated with DbContextScope or Ambient Scope. 
+    /// </summary>
     internal class ContextData : IDisposable
     {
         internal ContextCollection DbContextCollection { get; private set; }
@@ -16,6 +19,8 @@ namespace AmbientDbContext.Manager
         internal bool Disposed { get; set; }
 
         internal bool AllowCommit { get; set; }
+
+        internal IsolationLevel IsolationLevel { get; set; }
 
         internal ContextData()
         {
@@ -40,6 +45,15 @@ namespace AmbientDbContext.Manager
             return DbContextCollection.GetDbContextByType<T>();
         }
 
+        /// <summary>
+        /// Responsible for creating a new dbContext with given <see cref="DbContextOption.Mode"/>
+        /// </summary>
+        /// <typeparam name="T">dbContext of type {T} to be created.</typeparam>
+        /// <param name="mode"><see cref="DbContextOption.Mode"/> to create dbContext with.</param>
+        /// <param name="isolationLevel"><see cref="IsolationLevel"/> to create dbContext with.</param>
+        /// <param name="dbTransaction">create a dbContext with external transaction</param>
+        /// <param name="sqlConnection">create a dbContext with existing sql connection</param>
+        /// <returns>true if new dbContext created else false.</returns>
         internal bool CreateNewDbContextIfNotExists<T>(DbContextOption.Mode mode, IsolationLevel? isolationLevel, DbTransaction dbTransaction, DbConnection sqlConnection) where T : DbContext, IAmbientDbContext, new()
         {
             if (DbContextCollection.GetDbContextByType<T>() != null) return false;
@@ -71,6 +85,7 @@ namespace AmbientDbContext.Manager
                 {
                     if (isolationLevel.HasValue)
                     {
+                        IsolationLevel = isolationLevel.Value;
                         var transaction = currentDbContext.Database.BeginTransaction(isolationLevel.Value);
                         DbContextCollection.Add(currentDbContext, transaction);
                     }
@@ -84,21 +99,36 @@ namespace AmbientDbContext.Manager
             return true;
         }
 
+        /// <summary>
+        /// Commit all dbContext transactions.
+        /// </summary>
+        /// <param name="implicitCommit">true if implicit transaction else false.</param>
         internal void Commit(bool implicitCommit)
         {
             DbContextCollection.CommitAll(implicitCommit);
         }
 
+        /// <summary>
+        /// Commit all dbContext transactions.
+        /// </summary>
+        /// <param name="implicitCommit">true if implicit transaction else false.</param>
+        /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
         internal async Task CommitAsync(bool implicitCommit, CancellationToken cancellationToken)
         {
             await DbContextCollection.CommitAllAsync(implicitCommit, cancellationToken);
         }
 
+        /// <summary>
+        /// Rollback all dbContext transactions.
+        /// </summary>
         public void Rollback()
         {
             DbContextCollection.Rollback();
         }
 
+        /// <summary>
+        /// Dispose all dbContexts.
+        /// </summary>
         public void Dispose()
         {
             DbContextCollection.Dispose();

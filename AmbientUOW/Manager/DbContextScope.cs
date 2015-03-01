@@ -59,7 +59,7 @@ namespace AmbientDbContext.Manager
                 }
                 else
                 {
-                    if (_isolationLevel != null)
+                    if (_isolationLevel != null && _isolationLevel != IsolationLevel.ReadCommitted && contextData.IsolationLevel != _isolationLevel)
                     {
                         throw new InvalidOperationException("Cannot change the isolation level on an Ambient transaction");    
                     }

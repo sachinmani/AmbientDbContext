@@ -11,6 +11,9 @@ using AmbientDbContext.Interfaces;
 
 namespace AmbientDbContext.Manager
 {
+    /// <summary>
+    /// Responsible for holding and handling all dbContext associated with DbContextScope or Ambient Scope.
+    /// </summary>
     public class ContextCollection
     {
         private readonly IDictionary<Type, object> _dictionary;
@@ -28,6 +31,14 @@ namespace AmbientDbContext.Manager
             get { return _dictionary.Count; }
         }
 
+        /// <summary>
+        /// Responsible for adding newly created dbContext and its transaction in a dictionary with type as a key. Before adding to
+        /// the dictionary we override the SavingChanges event in objectContext to prevent developer from calling SaveChanges directly from
+        /// DbContext(DbContext.SaveChnages) 
+        /// </summary>
+        /// <typeparam name="T">{T} type</typeparam>
+        /// <param name="dbContext">DbContext</param>
+        /// <param name="contextTransaction">transaction associated with the new Dbcontext.</param>
         internal void Add<T>(T dbContext, DbContextTransaction contextTransaction) where T : DbContext, IAmbientDbContext, new()
         {
             //Prevent developers from calling DbContext.SaveChanges directly
@@ -48,6 +59,11 @@ namespace AmbientDbContext.Manager
             }
         }
 
+        /// <summary>
+        /// Retrieve the DbContext of type {T} from the dictionary and return it.
+        /// </summary>
+        /// <typeparam name="T">DbContext to be retrieved.</typeparam>
+        /// <returns>DbContext of type {T}</returns>
         internal T GetDbContextByType<T>() where T : DbContext, new()
         {
             if (_dictionary.ContainsKey(typeof(T)))
@@ -57,11 +73,21 @@ namespace AmbientDbContext.Manager
             return default(T);
         }
 
+        /// <summary>
+        /// Get all DbContext associated with UnitOfWorkScope or Ambient Scope.
+        /// </summary>
+        /// <returns></returns>
         internal ICollection GetAllDbContext()
         {
             return new[] {_dictionary.Values};
-        } 
+        }
 
+        /// <summary>
+        /// Save all dbContext changes and commit the transaction.
+        /// </summary>
+        /// <param name="implicitCommit"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         internal async Task CommitAllAsync(bool implicitCommit, CancellationToken cancellationToken)
         {
             var exceptionOccured = false;
@@ -112,6 +138,10 @@ namespace AmbientDbContext.Manager
             }
         }
 
+        /// <summary>
+        /// Commit all dbContext changes and commit the transaction.
+        /// </summary>
+        /// <param name="implicitCommit"></param>
         internal void CommitAll(bool implicitCommit)
         {
             var exceptionOccured = false;
@@ -161,6 +191,9 @@ namespace AmbientDbContext.Manager
             }
         }
 
+        /// <summary>
+        /// Dispose the dbContexts and  transaction associated with it.
+        /// </summary>
         internal void Dispose()
         {
             foreach (var dbcontext in _dictionary)

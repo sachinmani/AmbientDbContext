@@ -15,7 +15,7 @@ namespace AmbientDbContext.Manager
         public DbContextScope<T> CreateAmbientDbContextInReadonlyMode<T>()
             where T : DbContext, IAmbientDbContext, new()
         {
-            return CreateDbContextScope<T>(DbContextOption.Mode.Read, IsolationLevel.Serializable);   
+            return CreateDbContextScope<T>(DbContextOption.Mode.Read, IsolationLevel.ReadCommitted);   
         }
 
         public DbContextScope<T> CreateAmbientDbContextInReadonlyMode<T>(IsolationLevel isolationLevel) where T : DbContext, IAmbientDbContext, new()
@@ -26,7 +26,7 @@ namespace AmbientDbContext.Manager
         public DbContextScope<T> CreateAmbientDbContextInTransactionMode<T>()
             where T : DbContext, IAmbientDbContext, new()
         {
-            return CreateDbContextScope<T>(DbContextOption.Mode.Write, IsolationLevel.Serializable);
+            return CreateDbContextScope<T>(DbContextOption.Mode.Write, IsolationLevel.ReadCommitted);
         }
 
         public DbContextScope<T> CreateAmbientDbContextInTransactionMode<T>(IsolationLevel isolationLevel)
@@ -38,7 +38,7 @@ namespace AmbientDbContext.Manager
         public DbContextScope<T> CreateNonAmbientDbContextInTransactionMode<T>()
             where T : DbContext, IAmbientDbContext, new()
         {
-            return CreateNonAmbientDbContextInTransactionMode<T>(IsolationLevel.Serializable);
+            return CreateNonAmbientDbContextInTransactionMode<T>(IsolationLevel.ReadCommitted);
         }
 
         public DbContextScope<T> CreateNonAmbientDbContextInTransactionMode<T>(IsolationLevel isolationLevel)
