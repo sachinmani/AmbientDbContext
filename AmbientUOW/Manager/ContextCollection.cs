@@ -5,6 +5,7 @@ using System.Data.Entity;
 using System.Data.Entity.Infrastructure;
 using System.Data.Entity.Validation;
 using System.Diagnostics;
+using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
 using AmbientDbContext.Interfaces;
@@ -90,6 +91,7 @@ namespace AmbientDbContext.Manager
         /// <returns></returns>
         internal async Task CommitAllAsync(bool implicitCommit, CancellationToken cancellationToken)
         {
+            ExceptionDispatchInfo exceptionDispatchInfo = null;
             var exceptionOccured = false;
             Debug.WriteLine("Trying to save details");
             try
@@ -119,7 +121,13 @@ namespace AmbientDbContext.Manager
                             ve.PropertyName, ve.ErrorMessage);
                     }
                 }
-                throw;
+                exceptionDispatchInfo = ExceptionDispatchInfo.Capture(e);
+            }
+            catch (DbUpdateException e)
+            {
+                exceptionOccured = true;
+                Debug.WriteLine(e.InnerException);
+                exceptionDispatchInfo = ExceptionDispatchInfo.Capture(e);
             }
             finally
             {
@@ -134,7 +142,10 @@ namespace AmbientDbContext.Manager
                         contextTransaction.Rollback();
                     }
                 }
-
+                if (exceptionDispatchInfo != null)
+                {
+                    exceptionDispatchInfo.Throw();
+                }
             }
         }
 
@@ -144,6 +155,7 @@ namespace AmbientDbContext.Manager
         /// <param name="implicitCommit"></param>
         internal void CommitAll(bool implicitCommit)
         {
+            ExceptionDispatchInfo exceptionDispatchInfo = null;
             var exceptionOccured = false;
             Debug.WriteLine("Trying to save details");
             try
@@ -173,7 +185,13 @@ namespace AmbientDbContext.Manager
                             ve.PropertyName, ve.ErrorMessage);
                     }
                 }
-                throw;
+                exceptionDispatchInfo = ExceptionDispatchInfo.Capture(e);
+            }
+            catch (DbUpdateException e)
+            {
+                exceptionOccured = true;
+                Debug.WriteLine(e.InnerException);
+                exceptionDispatchInfo = ExceptionDispatchInfo.Capture(e);
             }
             finally
             {
@@ -187,6 +205,10 @@ namespace AmbientDbContext.Manager
                     {
                         contextTransaction.Rollback();
                     }
+                }
+                if (exceptionDispatchInfo != null)
+                {
+                    exceptionDispatchInfo.Throw();
                 }
             }
         }
