@@ -8,6 +8,70 @@ According to microsoft documentation "The call context allows a remoting client 
 
 Without going into the details of the implementation. I would like to straight go into the ways this utility could be used. Also understand things that need to be done, things to be aware of when using this utility. This utility could be used with any design pattern you would be using around the data access layer.
 
-To be continued with more details sooner!
+Make sure you wrap all your call inside "using" statement
 
+Starting a new readonly business transaction normally a GET request in the web.
+Make sure you wrap all your call inside "using" statement
+using(dbContextScopeFactory.CreateAmbientDbContextInReadonlyMode())
+{
 
+}
+
+or
+in case you want to pass different isolation level to the default IsolationLevel.ReadCommitted
+using(dbContextScopeFactory.CreateAmbientDbContextInReadonlyMode(isolationLevel))
+{
+	
+}
+
+Starting a new write business transaction normally POST/PUT/DELETE request in the web
+using(var dbContextScope = dbContextScopeFactory.CreateAmbientDbContextInTransactionMode())
+{
+
+	dbContextScope.SaveChanges();
+	or 
+	dbContextScope.SaveChangesAsync();
+}
+or
+in case you want to pass different isolation level to the default IsolationLevel.ReadCommitted
+using(var dbContextScope = dbContextScopeFactory.CreateAmbientDbContextInTransactionMode(isolationLevel))
+{
+
+	dbContextScope.SaveChanges();
+	or 
+	dbContextScope.SaveChangesAsync();
+}
+
+Nesting Ambient DbContextScope
+This utility allows you to nest dbContextScopes as call to SaveChanges from the child doesn't commit the business transaction. Only the SaveChanges from parent dbContextScope commit the transaction. Following are the things to have in mind.
+1. When the parent dbContextScope is in readonly mode, you cannot create a child dbContextScope in write transaction mode. Trying to do will do throw exception.
+2. Cannot change the isolation level in the child scope, trying to do will throw exception.
+3. You can have a parent dbContextScope in write scope and a child dbContextScope in readonly mode.
+
+using(var dbContextScope = dbContextScopeFactory.CreateAmbientDbContextInTransactionMode())
+{
+	using(var dbContextScope = dbContextScopeFactory.CreateAmbientDbContextInTransactionMode())
+	{
+		//this call below does not save the transaction
+		dbContextScope.SaveChanges();
+		or 
+		dbContextScope.SaveChangesAsync();
+	}
+
+	dbContextScope.SaveChanges();
+	or 
+	dbContextScope.SaveChangesAsync();
+}
+
+Though this is good, but I personally try to avoid nesting dbContextScope
+
+What is coming up
+1. Allow developers to call commit tranasction explicitly to allow them to do dirty reads inside the transaction.
+using(var dbContextScope = dbContextScopeFactory.CreateAmbientDbContextInTransactionMode())
+{
+	...
+	
+	dbContextScope.SaveChanges();
+	dbContextScope.CommitTransaction();
+}
+2. Better logging and exception handling and throwing 
