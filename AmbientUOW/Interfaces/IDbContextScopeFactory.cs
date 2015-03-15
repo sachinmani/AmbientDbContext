@@ -11,12 +11,6 @@ namespace AmbientDbContext.Interfaces
     public interface IDbContextScopeFactory
     {
         /// <summary>
-        /// Creates an ambient dbContextScope in transaction mode with default isolationLevel(IsolationLevel.ReadCommitted).
-        /// </summary>
-        DbContextScope<T> CreateAmbientDbContext<T>()
-            where T : DbContext, IAmbientDbContext, new();
-
-        /// <summary>
         /// Creates an ambient readonly dbContextScope in transaction mode with default isolationLevel(IsolationLevel.ReadCommitted)   
         /// </summary>
         DbContextScope<T> CreateAmbientDbContextInReadonlyMode<T>()

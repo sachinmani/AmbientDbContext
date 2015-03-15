@@ -7,11 +7,6 @@ namespace AmbientDbContext.Manager
 {
     public class DbContextScopeFactory : IDbContextScopeFactory
     {
-        public DbContextScope<T> CreateAmbientDbContext<T>() where T : DbContext, IAmbientDbContext, new()
-        {
-            return CreateDbContextScope<T>(DbContextOption.Mode.Write, null); 
-        }
-
         public DbContextScope<T> CreateAmbientDbContextInReadonlyMode<T>()
             where T : DbContext, IAmbientDbContext, new()
         {
