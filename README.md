@@ -78,7 +78,7 @@ using(var dbContextScope = dbContextScopeFactory.CreateAmbientDbContextInTransac
 
 Though this is good, but I personally try to avoid nesting dbContextScope
 
-Still lot more documentation to come. Please get back to me if you have any issues or doubts on any API.
+Still lot more documentation to come. Please get back to me if you have any issues or doubts on any API. I am currently working on some more features to this utility after which there would be an official 1.0 version of this utility. This utility still works and has all that is needed to get job done but just lacking documentation. Promise would soon put more documentation with examples.
 
 What is coming up
 
