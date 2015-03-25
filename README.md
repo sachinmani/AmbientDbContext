@@ -78,6 +78,8 @@ using(var dbContextScope = dbContextScopeFactory.CreateAmbientDbContextInTransac
 
 Though this is good, but I personally try to avoid nesting dbContextScope
 
+Still lot more documentation to come. Please get back to me if you have any issues or doubts on any API.
+
 What is coming up
 
 1. Allow developers to call commit tranasction explicitly to allow them to do dirty reads inside the transaction.
