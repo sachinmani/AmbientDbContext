@@ -1,5 +1,5 @@
 # AmbientDbContext
-AmbientDbContext helps you buildmodular and structured code using Entity framework. This utility works only with .Net 4.5.
+AmbientDbContext helps you build modular and structured code using Entity framework. This utility works only with .Net 4.5.
 
 For quite sometime I have been thinking about the ways of using DbContext in my projects. I always wanted a solution where I don't have pass around the DbContext as I felt passing DbContext around would make the code messier. Then thought about implementing a solution using ThreadStatic but solution using ThreadStatic cannot be used along with async method and linq queries. Finally came up with a solution of implementing the DbContext using CallContext.
 
@@ -10,7 +10,7 @@ Without going into the details of the implementation. I would like to straight g
 
 Make sure you wrap all your call inside "using" statement
 
-Starting a new readonly business transaction normally a GET request in the web.
+<h3><b>Starting a new readonly business transaction normally a GET request in the web.</b></h3>
 
 Make sure you wrap all your call inside "using" statement
 
@@ -75,6 +75,8 @@ using(var dbContextScope = dbContextScopeFactory.CreateAmbientDbContextInTransac
 	
 	dbContextScope.SaveChangesAsync();
 }
+
+DbContextScope in StandAloneMode
 
 Though this is good, but I personally try to avoid nesting dbContextScope
 
