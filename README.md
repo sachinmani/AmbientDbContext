@@ -17,10 +17,7 @@ Also, extend your DbContext with the interface IAmbientDbContext
 Make sure you wrap all your call inside <b>"using"</b> statement
 <code>
 using(dbContextScopeFactory.CreateAmbientDbContextInReadonlyMode())
-
 {
-
-
 }
 </code>
 or
@@ -29,23 +26,18 @@ in case you want to pass different isolation level to the default IsolationLevel
 
 <code>
 using(dbContextScopeFactory.CreateAmbientDbContextInReadonlyMode(isolationLevel))
-
 {
-	
-
 }
 </code>
 
 <h3><b>Starting a new write business transaction normally POST/PUT/DELETE request in the web</b></h3>
 <code>
 using(var dbContextScope = dbContextScopeFactory.CreateAmbientDbContextInTransactionMode())
-
 {
 
 	dbContextScope.SaveChanges();
 	or 
 	dbContextScope.SaveChangesAsync();
-
 }
 
 </code>
@@ -54,13 +46,10 @@ or
 in case you want to pass different isolation level to the default IsolationLevel.ReadCommitted
 <code>
 using(var dbContextScope = dbContextScopeFactory.CreateAmbientDbContextInTransactionMode(isolationLevel))
-
 {
-
 	dbContextScope.SaveChanges();
 	or 
 	dbContextScope.SaveChangesAsync();
-
 }
 </code>
 
@@ -75,19 +64,14 @@ This utility allows you to nest dbContextScopes as call to SaveChanges from the 
 <h4><b>3. You can have a parent dbContextScope in write scope and a child dbContextScope in readonly mode.</b></h4>
 
 <code>
-
 using(var dbContextScope = dbContextScopeFactory.CreateAmbientDbContextInTransactionMode())
-
-{
-	
-	using(var dbContextScope = dbContextScopeFactory.CreateAmbientDbContextInTransactionMode())
-	
+{	
+	using(var dbContextScope = dbContextScopeFactory.CreateAmbientDbContextInTransactionMode())	
 	{
 		//this call below does not save the transaction
 		dbContextScope.SaveChanges();
 		or 
-		dbContextScope.SaveChangesAsync();
-	
+		dbContextScope.SaveChangesAsync();	
 	}
 
 	dbContextScope.SaveChanges();
@@ -95,7 +79,6 @@ using(var dbContextScope = dbContextScopeFactory.CreateAmbientDbContextInTransac
 	or 
 	
 	dbContextScope.SaveChangesAsync();
-
 }
 </code>
 
@@ -109,7 +92,6 @@ Though this is good, but I personally try to avoid nesting dbContextScope.
 This mode is created to handle scenarios where an user want to capture details on failure of a operation. For example, you want to update the user profile on whether the email is not sent.
 <code>
 try
-
 {
 
 	SendEmail()
@@ -117,21 +99,16 @@ try
 }
 
 catch(SmtpException){}
-
 finally
-
 {
-	if(exeptionOccured)
-	
+	if(exeptionOccured)	
 	{
-		using(var dbContextScope = dbContextScopeFactory.CreateNonAmbientDbContextInTransactionMode())
-		
+		using(
+		var dbContextScope = dbContextScopeFactory.CreateNonAmbientDbContextInTransactionMode())		
 		{
 			//find the user, and update the status
-			dbContextScope.SaveChanges()
-		
-		}
-	
+			dbContextScope.SaveChanges()		
+		}	
 	}
 }
 </code>
