@@ -31,7 +31,7 @@ using(dbContextScopeFactory.CreateAmbientDbContextInReadonlyMode(isolationLevel)
 }
 
 <h3><b>Starting a new write business transaction normally POST/PUT/DELETE request in the web</b></h3>
-
+<code>
 using(var dbContextScope = dbContextScopeFactory.CreateAmbientDbContextInTransactionMode())
 {
 
@@ -39,6 +39,7 @@ using(var dbContextScope = dbContextScopeFactory.CreateAmbientDbContextInTransac
 	or 
 	dbContextScope.SaveChangesAsync();
 }
+</code>
 or
 
 in case you want to pass different isolation level to the default IsolationLevel.ReadCommitted
@@ -86,6 +87,7 @@ Though this is good, but I personally try to avoid nesting dbContextScope.
 <h3><b>DbContextScope in StandAloneMode</b></h3>
 
 This mode is created to handle scenarios where an user want to capture details on failure of a operation. For example, you want to update the user profile on whether the email is not sent.
+<code>
 try
 {
 	SendEmail()
@@ -102,7 +104,7 @@ finally
 		}
 	}
 }
-
+</code>
 Still lot more documentation to come. Please get back to me if you have any issues or doubts on any API. I am currently working on some more features to this utility after which there would be an official 1.0 version of this utility. This utility still works and has all that is needed to get job done but just lacking documentation. Promise would soon put more documentation with examples.
 
 <h4><b>What is coming up</b></h4>
