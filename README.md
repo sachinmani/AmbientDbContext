@@ -34,7 +34,10 @@ using(dbContextScopeFactory.CreateAmbientDbContextInReadonlyMode(isolationLevel)
 ```
 using(var dbContextScope = dbContextScopeFactory.CreateAmbientDbContextInTransactionMode())
 {
-
+	//The line below is used to locate the ambient DbContext. 
+	//It uses the DbContextLocator to locate the ambient DbContext
+	var context2 = DbContextLocator.GetDbContext<DbContext>();
+	
 	dbContextScope.SaveChanges();
 	or 
 	dbContextScope.SaveChangesAsync();
@@ -47,6 +50,9 @@ in case you want to pass different isolation level to the default IsolationLevel
 ```
 using(var dbContextScope = dbContextScopeFactory.CreateAmbientDbContextInTransactionMode(isolationLevel))
 {
+	//The line below is used to locate the ambient DbContext. 
+	//It uses the DbContextLocator to locate the ambient DbContext
+	var context2 = DbContextLocator.GetDbContext<DbContext>();
 	dbContextScope.SaveChanges();
 	or 
 	dbContextScope.SaveChangesAsync();
@@ -68,6 +74,9 @@ using(var dbContextScope = dbContextScopeFactory.CreateAmbientDbContextInTransac
 {	
 	using(var dbContextScope = dbContextScopeFactory.CreateAmbientDbContextInTransactionMode())	
 	{
+		//The line below is used to locate the ambient DbContext. 
+		//It uses the DbContextLocator to locate the ambient DbContext
+		var context2 = DbContextLocator.GetDbContext<DbContext>();
 		//this call below does not save the transaction
 		dbContextScope.SaveChanges();
 		or 
