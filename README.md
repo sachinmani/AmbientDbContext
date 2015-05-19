@@ -121,11 +121,11 @@ finally
 
 
 <h4><b>Explicit Transaction handling</b></h4>
-```
+
 Now the developers have the ability to handle transaction explicitly. Also allowing them to do dirty reads. All of your existing code should work fine except one small change to the method name for saving the changes. Instead of calling "SaveChanges" or "SaveChangesAsync", we need to call SaveAndCommitChanges or SaveAndCommitChangesAsync to use implicit transaction commits.
 
 In order to use explicit transaction handling, see the below example
-	
+```	
 	using(var dbContextScope = new dbContextScopeFactory().CreateAmbientDbContextInTransactionMode())	
 	{		
 		//BusinessOperations - 1
