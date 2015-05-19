@@ -3,7 +3,7 @@ using TestExamples.ValueObjects;
 
 namespace TestExamples.Interfaces
 {
-    internal interface IUserRepository
+    internal interface IUserServices
     {
         VoUser GetUser(long userId);
 

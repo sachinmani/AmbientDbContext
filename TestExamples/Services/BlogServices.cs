@@ -7,15 +7,15 @@ using TestExamples.Interfaces;
 using TestExamples.Operations;
 using TestExamples.ValueObjects;
 
-namespace TestExamples.Repository
+namespace TestExamples.Services
 {
-    public class BlogRepository : IBlogRepository
+    public class BlogServices : IBlogServices
     {
         private readonly BlogOperations _blogOperations;
         private readonly PostOperations _postOperations;
         private readonly UserOperations _userOperations;
 
-        public BlogRepository()
+        public BlogServices()
         {
             _blogOperations = new BlogOperations();
             _postOperations = new PostOperations();
@@ -25,7 +25,7 @@ namespace TestExamples.Repository
         public VoBlog GetBlog(int blogId)
         {
             //Demonstration of creating an AmbientDbContext in readonly mode
-            using (DbContextScopeFactory.CreateAmbientDbContextinReadonlyMode<BloggerDbContext>())
+            using (new DbContextScopeFactory().CreateAmbientDbContextInReadonlyMode<BloggerDbContext>())
             {
                 var blog = _blogOperations.GetBlog(blogId);
                 var voBlog = new VoBlog
@@ -49,7 +49,7 @@ namespace TestExamples.Repository
         public IEnumerable<VoBlog> GetBlogs()
         {
             //Demonstration of creating an AmbientDbContext in readonly mode
-            using (DbContextScopeFactory.CreateAmbientDbContextinReadonlyMode<BloggerDbContext>())
+            using (new DbContextScopeFactory().CreateAmbientDbContextInReadonlyMode<BloggerDbContext>())
             {
                 var blogs =  _blogOperations.GetBlogs();
                 return blogs.Select(blog => new VoBlog
@@ -65,7 +65,7 @@ namespace TestExamples.Repository
         public void AddBlog(VoBlog voBlog)
         {
             //Demonstration of creating an AmbientDbContext in transaction mode
-            using (var dbContextScope = DbContextScopeFactory.CreateAmbientDbContextinTransactionMode<BloggerDbContext>())
+            using (var dbContextScope = new DbContextScopeFactory().CreateAmbientDbContextInTransactionMode<BloggerDbContext>())
             {
                 bool exceptionOccured = false;
                 var user = _userOperations.GetUser(voBlog.UserId);
@@ -76,6 +76,7 @@ namespace TestExamples.Repository
                     var post = _postOperations.AddPost(voBlog.Post);
                     blog.BlogPost = post;
                     dbContextScope.SaveChanges();
+                    dbContextScope.Commit();
                 }
                 catch (Exception)
                 {
@@ -89,11 +90,10 @@ namespace TestExamples.Repository
                         var userOperations = new UserOperations();
                         using (
                             var nonAmbientdbContextScope =
-                                DbContextScopeFactory.CreateNonAmbientDbContextinTransactionMode<BloggerDbContext>())
+                                new DbContextScopeFactory().CreateNonAmbientDbContextInTransactionMode<BloggerDbContext>())
                         {
                             //Setting the user operations dbContext with the dbContext from DbContextScope just created
                             //else we would be using ambient DbContext.
-                            userOperations.BloggerDbContext = nonAmbientdbContextScope.GetNonAmbientDbContext();
                             userOperations.UpdateBlogCreationFailureCount(voBlog.UserId);
 
                             var updateduser = userOperations.GetUser(voBlog.UserId);
@@ -109,7 +109,7 @@ namespace TestExamples.Repository
         public VoBlog GetUserRecentBlog(long userId)
         {
             //Demonstration of creating an AmbientDbContext in readonly mode
-            using (DbContextScopeFactory.CreateAmbientDbContextinReadonlyMode<BloggerDbContext>())
+            using (new DbContextScopeFactory().CreateAmbientDbContextInReadonlyMode<BloggerDbContext>())
             {
                 var userRecentBlog = _blogOperations.GetUserRecentBlog(userId);
                 var blogDto = new VoBlog

@@ -100,22 +100,44 @@ namespace AmbientDbContext.Manager
         }
 
         /// <summary>
-        /// Commit all dbContext transactions.
+        /// Save all dirty object in the dbcontext but the transaction is not committed yet.
         /// </summary>
-        /// <param name="implicitCommit">true if implicit transaction else false.</param>
-        internal void Commit(bool implicitCommit)
+        internal void Save()
         {
-            DbContextCollection.CommitAll(implicitCommit);
+            DbContextCollection.SaveChanges();
+        }
+
+        /// <summary>
+        /// Save all dirty object in the dbcontext but the transaction is not committed yet.
+        /// </summary>
+        internal Task SaveAsync(CancellationToken cancellationToken)
+        {
+            return DbContextCollection.SaveChangesAsync(cancellationToken);
+        }
+
+        /// <summary>
+        /// Commit all transaction.
+        /// </summary>
+        internal void Commit()
+        {
+            DbContextCollection.Commit();
         }
 
         /// <summary>
         /// Commit all dbContext transactions.
         /// </summary>
-        /// <param name="implicitCommit">true if implicit transaction else false.</param>
-        /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
-        internal async Task CommitAsync(bool implicitCommit, CancellationToken cancellationToken)
+        internal void SaveAndCommit()
         {
-            await DbContextCollection.CommitAllAsync(implicitCommit, cancellationToken);
+            DbContextCollection.SaveAndCommitChanges();
+        }
+
+        /// <summary>
+        /// Commit all dbContext transactions.
+        /// </summary>
+        /// <param name="cancellationToken"><see cref="CancellationToken"/></param>
+        internal async Task SaveAndCommitAsync(CancellationToken cancellationToken)
+        {
+            await DbContextCollection.SaveAndCommitChangesAsync(cancellationToken);
         }
 
         /// <summary>

@@ -5,6 +5,7 @@ using System.Data.Common;
 using System.Data.Entity;
 using System.Data.Entity.Core.Objects;
 using System.Data.Entity.Infrastructure;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using AmbientDbContext.Interfaces;
@@ -44,6 +45,7 @@ namespace AmbientDbContext.Manager
             var contextData = CallContextContextData.GetContextData();
             if (contextData == null)
             {
+                Debug.WriteLine("Creating a new DbContext");
                 contextData = ContextData.CreateContextData<T>(_mode, _isolationLevel, _dbTransaction,
                     _sqlConnection);
                 _isParentScope = true;
@@ -54,11 +56,13 @@ namespace AmbientDbContext.Manager
                 var dbcontext = contextData.GetDbContextByType<T>();
                 if (dbcontext == null)
                 {
+                    Debug.WriteLine("Creating a new DbContext");
                     contextData.CreateNewDbContextIfNotExists<T>(_mode, _isolationLevel, _dbTransaction,
                         _sqlConnection);
                 }
                 else
                 {
+                    Debug.WriteLine("DbContext exists in CallContext, just re-using it");
                     if (_isolationLevel != null && _isolationLevel != IsolationLevel.ReadCommitted && contextData.IsolationLevel != _isolationLevel)
                     {
                         throw new InvalidOperationException("Cannot change the isolation level on an Ambient transaction");    
@@ -88,7 +92,84 @@ namespace AmbientDbContext.Manager
             return contextData.GetDbContextByType<T>();
         }
 
-        public void SaveChanges(bool implicitCommit = true)
+        /// <summary>
+        /// Save the db context changes. Note the transaction is not committed yet.
+        /// </summary>
+        public void SaveChanges()
+        {
+            if (_savedContextData.Disposed)
+            {
+                //this can only happen when a parallel threads are executing with the main thread and the parallel/main
+                //thread has disposed before the main and/or other parallel has finished execution
+                //This should never happen.Only programming error could cause this issue.
+                throw new ObjectDisposedException("Object already disposed exception");
+            }
+            var contextData = CallContextContextData.GetContextData();
+            if (contextData != _savedContextData)
+            {
+                //Duplicate contextdata has been created by someother thread. Could be result of two thread trying to create contextData at same time.
+                throw new Exception(
+                    "Duplicate context seen. Something went terribly wrong in the programming. Please check your code to correct.");
+            }
+            _savedContextData.Save();
+        }
+
+        /// <summary>
+        /// Save the db context changes. Note the transaction is not committed yet.
+        /// </summary>
+        public Task SaveChangesAsync(CancellationToken cancellationToken)
+        {
+            if (_savedContextData.Disposed)
+            {
+                //this can only happen when a parallel threads are executing with the main thread and the parallel/main
+                //thread has disposed before the main and/or other parallel has finished execution
+                //This should never happen.Only programming error could cause this issue.
+                throw new ObjectDisposedException("Object already disposed exception");
+            }
+            var contextData = CallContextContextData.GetContextData();
+            if (contextData != _savedContextData)
+            {
+                //Duplicate contextdata has been created by someother thread. Could be result of two thread trying to create contextData at same time.
+                throw new Exception(
+                    "Duplicate context seen. Something went terribly wrong in the programming. Please check your code to correct.");
+            }
+            return _savedContextData.SaveAsync(cancellationToken);
+        }
+
+        /// <summary>
+        /// Commit all dbContext transactions.
+        /// </summary>
+        public void Commit()
+        {
+            if (_savedContextData.Disposed)
+            {
+                //this can only happen when a parallel threads are executing with the main thread and the parallel/main
+                //thread has disposed before the main and/or other parallel has finished execution
+                //This should never happen.Only programming error could cause this issue.
+                throw new ObjectDisposedException("Object already disposed exception");
+            }
+            var contextData = CallContextContextData.GetContextData();
+            if (contextData != _savedContextData)
+            {
+                //Duplicate contextdata has been created by someother thread. Could be result of two thread trying to create contextData at same time.
+                throw new Exception(
+                    "Duplicate context seen. Something went terribly wrong in the programming. Please check your code to correct.");
+            }
+
+            if (!_isParentScope)
+            {
+                _isCompleted = true;
+                Debug.WriteLine("Cannot commit the transaction as Commit method is called from a child dbContextScope");
+                return;
+            }
+            _savedContextData.Commit();
+            _isCompleted = true;
+        }
+
+        /// <summary>
+        /// Save all db context changes and commit all the transactions
+        /// </summary>
+        public void SaveAndCommitChanges()
         {
             if (_savedContextData.Disposed)
             {
@@ -110,11 +191,14 @@ namespace AmbientDbContext.Manager
                 _isCompleted = true;
                 return;
             }
-            _savedContextData.Commit(implicitCommit);
+            _savedContextData.SaveAndCommit();
             _isCompleted = true;
         }
 
-        public async Task SaveChangesAsync(CancellationToken cancellationToken, bool implicitCommit = true)
+        /// <summary>
+        /// Save all db context changes and commit all the transactions
+        /// </summary>
+        public async Task SaveAndCommitChangesAsync(CancellationToken cancellationToken)
         {
             if (_savedContextData.Disposed)
             {
@@ -135,7 +219,7 @@ namespace AmbientDbContext.Manager
                 _isCompleted = true;
                 return;
             }
-            await _savedContextData.CommitAsync(implicitCommit, cancellationToken);
+            await _savedContextData.SaveAndCommitAsync(cancellationToken);
             _isCompleted = true;
         }
 
@@ -273,6 +357,7 @@ namespace AmbientDbContext.Manager
                 //Remove the contextData from the CallContext.
                 CallContextContextData.RemoveContextData();
                 contextData.Disposed = true;
+                Debug.WriteLine("DbContext disposed successfully");
             }
         }
     }

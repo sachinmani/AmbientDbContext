@@ -1,24 +1,23 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using AmbientDbContext.Manager;
 using DataModel;
 using TestExamples.Interfaces;
 using TestExamples.Operations;
 using TestExamples.ValueObjects;
 
-namespace TestExamples.Repository
+namespace TestExamples.Services
 {
-    public class UserRepository : IUserRepository
+    public class UserServices : IUserServices
     {
-        private UserOperations _userOperations;
-        public UserRepository()
+        private readonly UserOperations _userOperations;
+        public UserServices()
         {
             _userOperations = new UserOperations();
         }
         public VoUser GetUser(long userId)
         {
             //Demonstration of creating an AmbientDbContext in readonly mode
-            using (var dbContextScope = DbContextScopeFactory.CreateAmbientDbContextinReadonlyMode<BloggerDbContext>())
+            using (var dbContextScope = new DbContextScopeFactory().CreateAmbientDbContextInReadonlyMode<BloggerDbContext>())
             {
                 //The operations method doesn't take any dbContext parameter.We are not passing the dbContext around
                 var user = _userOperations.GetUser(userId);
@@ -33,7 +32,7 @@ namespace TestExamples.Repository
         public async Task<VoUser> GetUserAsync(long userId)
         {
             //Demonstration of creating an AmbientDbContext in readonly mode
-            using (var dbContextScope = DbContextScopeFactory.CreateAmbientDbContextinReadonlyMode<BloggerDbContext>())
+            using (var dbContextScope = new DbContextScopeFactory().CreateAmbientDbContextInReadonlyMode<BloggerDbContext>())
             {
                 //The interesting thing to notice in the below code is that it doesn't run on the main thread. Instead it spins
                 //off its own thread and run the operation on the new thread. Even when you move between threads the 
@@ -50,10 +49,11 @@ namespace TestExamples.Repository
         public long AddUser(VoUser user)
         {
             //Demonstration of creating an AmbientDbContext in transaction mode
-            using (var dbContextScope = DbContextScopeFactory.CreateAmbientDbContextinTransactionMode<BloggerDbContext>())
+            using (var dbContextScope = new DbContextScopeFactory().CreateAmbientDbContextInReadonlyMode<BloggerDbContext>())
             {
                 var addedUser = _userOperations.AddUser(user);
                 dbContextScope.SaveChanges();
+                dbContextScope.Commit();
                 return addedUser.UserId;
             }
         }

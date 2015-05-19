@@ -3,7 +3,7 @@ using TestExamples.ValueObjects;
 
 namespace TestExamples.Interfaces
 {
-    public interface IBlogRepository
+    public interface IBlogServices
     {
         VoBlog GetBlog(int blogId);
 

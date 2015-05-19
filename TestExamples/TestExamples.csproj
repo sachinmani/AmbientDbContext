@@ -50,15 +50,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Interfaces\IBlogRepository.cs" />
-    <Compile Include="Interfaces\IUserRepository.cs" />
+    <Compile Include="Interfaces\IBlogServices.cs" />
+    <Compile Include="Interfaces\IUserServices.cs" />
     <Compile Include="Operations\BlogOperations.cs" />
     <Compile Include="Operations\PostOperations.cs" />
     <Compile Include="Operations\UserOperations.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Repository\BlogRepository.cs" />
-    <Compile Include="Repository\UserRepository.cs" />
+    <Compile Include="Services\BlogServices.cs" />
+    <Compile Include="Services\UserServices.cs" />
     <Compile Include="ValueObjects\VoBlog.cs" />
     <Compile Include="ValueObjects\VoUser.cs" />
   </ItemGroup>

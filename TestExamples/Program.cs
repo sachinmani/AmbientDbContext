@@ -2,7 +2,7 @@
 using System.Data.Entity;
 using DataModel;
 using TestExamples.Interfaces;
-using TestExamples.Repository;
+using TestExamples.Services;
 using TestExamples.ValueObjects;
 
 namespace TestExamples
@@ -20,7 +20,7 @@ namespace TestExamples
 
             //Creating an user
             Console.WriteLine("Creating an user");
-            IUserRepository userRepository = new UserRepository();
+            IUserServices userRepository = new UserServices();
             var userId = userRepository.AddUser(new VoUser
             {
                 Name = "TestUser",
@@ -29,7 +29,7 @@ namespace TestExamples
 
             //Creating a blog and its post
             Console.WriteLine("Creating a blog post");
-            IBlogRepository blogRepository = new BlogRepository();
+            IBlogServices blogRepository = new BlogServices();
             var blog = new VoBlog
             {
                 CreatedDateTime = DateTime.Now,

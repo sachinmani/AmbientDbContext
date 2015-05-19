@@ -83,64 +83,32 @@ namespace AmbientDbContext.Manager
             return new[] {_dictionary.Values};
         }
 
+
         /// <summary>
-        /// Save all dbContext changes and commit the transaction.
+        /// Commit all dbContext changes and commit the transaction.
         /// </summary>
-        /// <param name="implicitCommit"></param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        internal async Task CommitAllAsync(bool implicitCommit, CancellationToken cancellationToken)
+        internal void SaveAndCommitChanges()
         {
             ExceptionDispatchInfo exceptionDispatchInfo = null;
             var exceptionOccured = false;
-            Debug.WriteLine("Trying to save details");
             try
             {
-                foreach (var dbContext in _dictionary.Values)
-                {
-                    var context = ((IAmbientDbContext) dbContext);
-                    if (context.Mode == DbContextOption.Mode.Read && ((DbContext) dbContext).IsContextDirty())
-                    {
-                        throw new InvalidOperationException("Cannot modify entities on a readonly context");
-                    }
-                    _allowSaving = true;
-                    await ((DbContext)dbContext).SaveChangesAsync(cancellationToken);
-                }
+                SaveChanges();
             }
-            catch (DbEntityValidationException e)
+            catch (Exception e)
             {
                 exceptionOccured = true;
-                foreach (var eve in e.EntityValidationErrors)
-                {
-                    Debug.WriteLine(
-                        "Entity of type \"{0}\" in state \"{1}\" has the following validation errors:",
-                        eve.Entry.Entity.GetType().Name, eve.Entry.State);
-                    foreach (var ve in eve.ValidationErrors)
-                    {
-                        Debug.WriteLine("- Property: \"{0}\", Error: \"{1}\"",
-                            ve.PropertyName, ve.ErrorMessage);
-                    }
-                }
-                exceptionDispatchInfo = ExceptionDispatchInfo.Capture(e);
-            }
-            catch (DbUpdateException e)
-            {
-                exceptionOccured = true;
-                Debug.WriteLine(e.InnerException);
                 exceptionDispatchInfo = ExceptionDispatchInfo.Capture(e);
             }
             finally
             {
-                foreach (var contextTransaction in _transactionDictionary.Values)
+                if (!exceptionOccured)
                 {
-                    if (implicitCommit && !exceptionOccured)
-                    {
-                        contextTransaction.Commit();
-                    }
-                    else
-                    {
-                        contextTransaction.Rollback();
-                    }
+                    Commit();
+                }
+                else
+                {
+                    Rollback();
                 }
                 if (exceptionDispatchInfo != null)
                 {
@@ -150,13 +118,45 @@ namespace AmbientDbContext.Manager
         }
 
         /// <summary>
-        /// Commit all dbContext changes and commit the transaction.
+        /// Save all dbContext changes and commit the transaction.
         /// </summary>
-        /// <param name="implicitCommit"></param>
-        internal void CommitAll(bool implicitCommit)
+        /// <returns></returns>
+        internal async Task SaveAndCommitChangesAsync(CancellationToken cancellationToken)
         {
             ExceptionDispatchInfo exceptionDispatchInfo = null;
             var exceptionOccured = false;
+            Debug.WriteLine("Trying to save details");
+            try
+            {
+                await SaveChangesAsync(cancellationToken);
+            }
+            catch (Exception e)
+            {
+                exceptionOccured = true;
+                exceptionDispatchInfo = ExceptionDispatchInfo.Capture(e);
+            }
+            finally
+            {
+                if (!exceptionOccured)
+                {
+                    Commit();
+                }
+                else
+                {
+                    Rollback();
+                }
+                if (exceptionDispatchInfo != null)
+                {
+                    exceptionDispatchInfo.Throw();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Save the changes in the dbcontext but not committed yet. Transactions not committed yet.
+        /// </summary>
+        internal void SaveChanges()
+        {
             Debug.WriteLine("Trying to save details");
             try
             {
@@ -173,7 +173,6 @@ namespace AmbientDbContext.Manager
             }
             catch (DbEntityValidationException e)
             {
-                exceptionOccured = true;
                 foreach (var eve in e.EntityValidationErrors)
                 {
                     Debug.WriteLine(
@@ -185,31 +184,65 @@ namespace AmbientDbContext.Manager
                             ve.PropertyName, ve.ErrorMessage);
                     }
                 }
-                exceptionDispatchInfo = ExceptionDispatchInfo.Capture(e);
+                throw;
             }
             catch (DbUpdateException e)
             {
-                exceptionOccured = true;
                 Debug.WriteLine(e.InnerException);
-                exceptionDispatchInfo = ExceptionDispatchInfo.Capture(e);
+                throw;
             }
-            finally
+        }
+
+        /// <summary>
+        /// Save the changes in the dbContext asynchronously without blocking but not committed yet.
+        /// Transaction not committed yet.
+        /// </summary>
+        internal async Task SaveChangesAsync(CancellationToken cancellationToken)
+        {
+            Debug.WriteLine("Trying to save details");
+            try
             {
-                foreach (var contextTransaction in _transactionDictionary.Values)
+                foreach (var dbContext in _dictionary.Values)
                 {
-                    if (implicitCommit && !exceptionOccured)
+                    var context = ((IAmbientDbContext)dbContext);
+                    if (context.Mode == DbContextOption.Mode.Read && ((DbContext)dbContext).IsContextDirty())
                     {
-                        contextTransaction.Commit();
+                        throw new InvalidOperationException("Cannot modify entities on a readonly context");
                     }
-                    else
+                    _allowSaving = true;
+                    await ((DbContext)dbContext).SaveChangesAsync(cancellationToken);
+                }
+            }
+            catch (DbEntityValidationException e)
+            {
+                foreach (var eve in e.EntityValidationErrors)
+                {
+                    Debug.WriteLine(
+                        "Entity of type \"{0}\" in state \"{1}\" has the following validation errors:",
+                        eve.Entry.Entity.GetType().Name, eve.Entry.State);
+                    foreach (var ve in eve.ValidationErrors)
                     {
-                        contextTransaction.Rollback();
+                        Debug.WriteLine("- Property: \"{0}\", Error: \"{1}\"",
+                            ve.PropertyName, ve.ErrorMessage);
                     }
                 }
-                if (exceptionDispatchInfo != null)
-                {
-                    exceptionDispatchInfo.Throw();
-                }
+                throw;
+            }
+            catch (DbUpdateException e)
+            {
+                Debug.WriteLine(e.InnerException);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Commit all the transactions.
+        /// </summary>
+        internal void Commit()
+        {
+            foreach (var contextTransaction in _transactionDictionary.Values)
+            {
+               contextTransaction.Commit();
             }
         }
 
@@ -231,6 +264,9 @@ namespace AmbientDbContext.Manager
             _dictionary.Clear();
         }
 
+        /// <summary>
+        /// Rollback all transaction
+        /// </summary>
         internal void Rollback()
         {
             foreach (var dbcontext in _dictionary)

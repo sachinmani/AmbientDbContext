@@ -39,7 +39,7 @@ namespace UnitTests
         /// Testing the dbContext in the single thread.
         /// </summary>
         [Test]
-        public void AmbientDbContext_Saves_Successfully()
+        public void Saves_Successfully()
         {
             using (
                 var dbContextScope =
@@ -68,7 +68,7 @@ namespace UnitTests
                     Title = "Ambient Simple Test Context"
                 };
                 blog.BlogPost = post;
-                dbContextScope.SaveChanges();
+                dbContextScope.SaveAndCommitChanges();
 
                 Assert.That(context.Blogs.Count() == 1);
                 Assert.That(context.Posts.Count() == 1);
@@ -79,7 +79,7 @@ namespace UnitTests
         /// Testing the dbContext in the single thread but in async mode which causes the await task to run on a different thread.
         /// </summary>
         [Test]
-        public void AmbientDbContext_Saves_Successfully_InAsyncMode()
+        public void Saves_Successfully_InAsyncMode()
         {
             using (
                 var dbContextScope =
@@ -109,7 +109,7 @@ namespace UnitTests
                     Title = "Ambient Simple Test Context"
                 };
                 blog.BlogPost = post;
-                dbContextScope.SaveChanges();
+                dbContextScope.SaveAndCommitChanges();
                 var result = Task.Run(() => context.Blogs.FirstAsync());
                 result.Wait();
                 Assert.That(result.Result != null);
@@ -124,7 +124,7 @@ namespace UnitTests
         /// </summary>
         [Test]
         [ExpectedException(typeof(InvalidOperationException))]
-        public void AmbientDbContext_Should_ThrowInvalidOperationException_WhenParentInRead_AndChildInWriteMode()
+        public void Should_ThrowInvalidOperationException_WhenParentInRead_AndChildInWriteMode()
         {
             using (_dbContextScopeFactory.CreateAmbientDbContextInReadonlyMode<BloggerDbContext>())
             {
@@ -157,7 +157,7 @@ namespace UnitTests
                         Title = "Ambient Simple Test Context"
                     };
                     blog.BlogPost = post;
-                    dbContextScope2.SaveChanges();
+                    dbContextScope2.SaveAndCommitChanges();
                 }
             }
         }
@@ -166,7 +166,7 @@ namespace UnitTests
         /// Testing the dbContext in the nested mode.
         /// </summary>
         [Test]
-        public void AmbientDbContext_Should_Successfully_Save_WhenParentAndChild_InWriteMode()
+        public void Should_Successfully_Save_WhenParentAndChild_InWriteMode()
         {
             using (
                 var dbContextScope =
@@ -201,7 +201,7 @@ namespace UnitTests
                         Title = "Ambient Simple Test Context"
                     };
                     blog2.BlogPost = post2;
-                    dbContextScope2.SaveChanges();
+                    dbContextScope2.SaveAndCommitChanges();
                     Assert.That(!context2.Blogs.Any());
                     Assert.That(!context2.Posts.Any());
                 }
@@ -229,14 +229,14 @@ namespace UnitTests
                     Title = "Ambient Simple Test Context"
                 };
                 blog.BlogPost = post;
-                dbContextScope.SaveChanges();
+                dbContextScope.SaveAndCommitChanges();
                 Assert.That(context.Blogs.Count() == 2);
                 Assert.That(context.Posts.Count() == 2);
             }
         }
 
         [Test]
-        public void AmbientDbContext_Should_SaveSuccessfully_WhenUsingAsyncMethods()
+        public void Should_SaveSuccessfully_WhenUsingAsyncMethods()
         {
             var task = new Task(async () => await AddBlog());
             task.Start();
@@ -244,7 +244,7 @@ namespace UnitTests
         }
 
         [Test]
-        public void AmbientDbContext_Should_SaveSuccessfully_WhenUsingNestedAsyncMethods()
+        public void Should_SaveSuccessfully_WhenUsingNestedAsyncMethods()
         {
             using (
                 var dbContextScope2 =
@@ -258,7 +258,7 @@ namespace UnitTests
                 task.Wait();
                 Assert.That(!context2.Blogs.Any());
                 Assert.That(!context2.Posts.Any());
-                dbContextScope2.SaveChanges();
+                dbContextScope2.SaveAndCommitChanges();
                 Assert.That(context2.Blogs.Count() == 1);
             }
         }
@@ -294,12 +294,12 @@ namespace UnitTests
                     Title = "Ambient Simple Test Context"
                 };
                 blog2.BlogPost = post;
-                await dbContextScope2.SaveChangesAsync(new CancellationToken());
+                await dbContextScope2.SaveAndCommitChangesAsync(new CancellationToken());
             }
         }
         
         [Test]
-        public void AmbientDbContext_Saves_Successfully_WhenExternalTransactionUsed()
+        public void Saves_Successfully_WhenExternalTransactionUsed()
         {
             var initializer = new CreateDatabaseIfNotExists<BloggerDbContext>();
             Database.SetInitializer(initializer);
@@ -339,7 +339,7 @@ namespace UnitTests
                             Title = "Ambient Simple Test Context"
                         };
                         blog2.BlogPost = post;
-                        dbContextScope2.SaveChanges(false);
+                        dbContextScope2.SaveAndCommitChanges();
                         Assert.That(context2.Blogs.Count() == 1);
                     }
                     sqlTxn.Commit();
@@ -378,7 +378,7 @@ namespace UnitTests
                     Title = "Ambient Simple Test Context"
                 };
                 blog.BlogPost = post;
-                dbContextScope.SaveChanges();
+                dbContextScope.SaveAndCommitChanges();
 
                 Assert.That(context.Blogs.Count() == 1);
                 Assert.That(context.Posts.Count() == 1);
@@ -417,7 +417,7 @@ namespace UnitTests
                         Title = "Ambient Simple Test Context"
                     };
                     blog.BlogPost = post;
-                    dbContextScope.SaveChanges();
+                    dbContextScope.SaveAndCommitChanges();
 
                     Assert.That(context.Blogs.Count() == 1);
                     Assert.That(context.Posts.Count() == 1);
@@ -457,7 +457,7 @@ namespace UnitTests
                         Title = "Ambient Simple Test Context"
                     };
                     blog.BlogPost = post;
-                    dbContextScope.SaveChanges();
+                    dbContextScope.SaveAndCommitChanges();
 
                     Assert.That(context.Blogs.Count() == 1);
                     Assert.That(context.Posts.Count() == 1);
@@ -486,10 +486,159 @@ namespace UnitTests
                     Title = "Ambient Simple Test Context"
                 };
                 blog2.BlogPost = post2;
-                dbContextScope2.SaveChanges();
+                dbContextScope2.SaveAndCommitChanges();
 
                 Assert.That(context2.Blogs.Count() == 2);
                 Assert.That(context2.Posts.Count() == 2);
+            }
+        }
+
+        [Test]
+        public void Allows_DirtyReads_And_DoesntSaveWhenTransactionNotCommitted()
+        {
+            using (var dbContextScope = _dbContextScopeFactory.CreateAmbientDbContextInTransactionMode<BloggerDbContext>())
+            {
+                //Get the current DbContext of type BloggerDbContext
+                var context = DbContextLocator.GetDbContext<BloggerDbContext>();
+
+                //Adding Blog to the database.
+                var blog2 = new Blog
+                {
+                    CreatedDate = DateTime.Now,
+                    UpdatedDate = DateTime.Now,
+                    BlogUser = new User
+                    {
+                        Name = "TestUser",
+                        Occupation = "Software Developer",
+                    },
+                    Overview = "This is a test overview"
+                };
+                context.Blogs.Add(blog2);
+
+                var post = new Post
+                {
+                    Content = "Test Content",
+                    Meta = "Test",
+                    ShortDescription = "This is an example test content",
+                    Title = "Ambient Simple Test Context"
+                };
+                blog2.BlogPost = post;
+                dbContextScope.SaveChanges();
+                using (
+                        _dbContextScopeFactory.CreateAmbientDbContextInTransactionMode<BloggerDbContext>())
+                {
+                    //Get the current DbContext of type BloggerDbContext
+                    var context2 = DbContextLocator.GetDbContext<BloggerDbContext>();
+                    Assert.That(context2.Blogs.Count() == 1);
+                }
+            }
+
+            using (_dbContextScopeFactory.CreateAmbientDbContextInTransactionMode<BloggerDbContext>())
+            {
+                //Get the current DbContext of type BloggerDbContext
+                var context = DbContextLocator.GetDbContext<BloggerDbContext>();
+                Assert.That(!context.Blogs.Any());
+            }
+        }
+
+        [Test]
+        public void SavesSuccessfully_WhenTransactionCommitted()
+        {
+            using (var dbContextScope = _dbContextScopeFactory.CreateAmbientDbContextInTransactionMode<BloggerDbContext>())
+            {
+                //Get the current DbContext of type BloggerDbContext
+                var context = DbContextLocator.GetDbContext<BloggerDbContext>();
+
+                //Adding Blog to the database.
+                var blog2 = new Blog
+                {
+                    CreatedDate = DateTime.Now,
+                    UpdatedDate = DateTime.Now,
+                    BlogUser = new User
+                    {
+                        Name = "TestUser",
+                        Occupation = "Software Developer",
+                    },
+                    Overview = "This is a test overview"
+                };
+                context.Blogs.Add(blog2);
+
+                var post = new Post
+                {
+                    Content = "Test Content",
+                    Meta = "Test",
+                    ShortDescription = "This is an example test content",
+                    Title = "Ambient Simple Test Context"
+                };
+                blog2.BlogPost = post;
+                dbContextScope.SaveChanges();
+                using (
+                    var dbContextScope2 =
+                        _dbContextScopeFactory.CreateAmbientDbContextInTransactionMode<BloggerDbContext>())
+                {
+                    //Get the current DbContext of type BloggerDbContext
+                    var context2 = DbContextLocator.GetDbContext<BloggerDbContext>();
+                    Assert.That(context2.Blogs.Count() == 1);
+                }
+                dbContextScope.Commit();
+            }
+
+            using (_dbContextScopeFactory.CreateAmbientDbContextInTransactionMode<BloggerDbContext>())
+            {
+                //Get the current DbContext of type BloggerDbContext
+                var context = DbContextLocator.GetDbContext<BloggerDbContext>();
+                Assert.That(context.Blogs.Count() == 1);
+            }
+        }
+
+        [Test]
+        public void DoesntSaveTransaction_FromChildDbContext()
+        {
+            using (var dbContextScope = _dbContextScopeFactory.CreateAmbientDbContextInTransactionMode<BloggerDbContext>())
+            {
+                //Get the current DbContext of type BloggerDbContext
+                var context = DbContextLocator.GetDbContext<BloggerDbContext>();
+
+                //Adding Blog to the database.
+                var blog2 = new Blog
+                {
+                    CreatedDate = DateTime.Now,
+                    UpdatedDate = DateTime.Now,
+                    BlogUser = new User
+                    {
+                        Name = "TestUser",
+                        Occupation = "Software Developer",
+                    },
+                    Overview = "This is a test overview"
+                };
+                context.Blogs.Add(blog2);
+
+                var post = new Post
+                {
+                    Content = "Test Content",
+                    Meta = "Test",
+                    ShortDescription = "This is an example test content",
+                    Title = "Ambient Simple Test Context"
+                };
+                blog2.BlogPost = post;
+                dbContextScope.SaveChanges();
+                using (
+                    var dbContextScope2 =
+                        _dbContextScopeFactory.CreateAmbientDbContextInTransactionMode<BloggerDbContext>())
+                {
+                    //Get the current DbContext of type BloggerDbContext
+                    var context2 = DbContextLocator.GetDbContext<BloggerDbContext>();
+                    Assert.That(context2.Blogs.Count() == 1);
+
+                    dbContextScope2.Commit();
+                }
+            }
+
+            using (_dbContextScopeFactory.CreateAmbientDbContextInTransactionMode<BloggerDbContext>())
+            {
+                //Get the current DbContext of type BloggerDbContext
+                var context = DbContextLocator.GetDbContext<BloggerDbContext>();
+                Assert.That(!context.Blogs.Any());
             }
         }
     }
