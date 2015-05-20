@@ -144,14 +144,6 @@ Still lot more documentation to come. Please get back to me if you have any issu
 
 <h4><b>What is coming up</b></h4>
 
-1. Allow developers to call commit tranasction explicitly to allow them to do dirty reads inside the transaction.
-```
-using(var dbContextScope = dbContextScopeFactory.CreateAmbientDbContextInTransactionMode())
-{
-	...
-	
-	dbContextScope.SaveChanges();
-	dbContextScope.CommitTransaction();
-}
-```
-2. Better logging and exception handling and throwing 
+1. Better logging and exception handling and throwing 
+2. Soft delete functionality
+3. Number Range validation at the database level.
